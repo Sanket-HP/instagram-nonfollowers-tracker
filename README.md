@@ -51,6 +51,44 @@ with the `DATABASE_URL` environment variable if you want a different path.
 4. You'll find `followers_1.json` and `following.json` inside. Upload them to a
    snapshot in this app.
 
+## Deploy
+
+The repo ships with config for both **Render** and **Railway**. Both use
+`gunicorn wsgi:app` as the start command and a persistent disk / volume for
+the SQLite database.
+
+### Render (one-click via Blueprint)
+
+1. Push this repo to GitHub.
+2. Go to <https://dashboard.render.com/blueprints> and click **New Blueprint
+   Instance**. Point it at this repo.
+3. Render reads [`render.yaml`](./render.yaml) and provisions:
+   - a free web service running `gunicorn wsgi:app`,
+   - a 1 GB persistent disk mounted at `/var/data`,
+   - `DATABASE_URL=sqlite:////var/data/tracker.sqlite`,
+   - a random `SECRET_KEY`.
+4. Click **Apply** and wait for the first deploy to finish. Your app will be
+   live at `https://<service-name>.onrender.com`.
+
+### Railway
+
+1. Push this repo to GitHub.
+2. Go to <https://railway.app/new>, choose **Deploy from GitHub repo**, and
+   select this repo.
+3. Railway auto-detects Python via [`nixpacks.toml`](./nixpacks.toml) /
+   [`railway.json`](./railway.json) and runs
+   `gunicorn wsgi:app --bind 0.0.0.0:$PORT`.
+4. Add a **Volume** to the service (any size; 1 GB is plenty), mount path
+   `/data`.
+5. Set these variables on the service:
+   - `SECRET_KEY` — any random string.
+   - `DATABASE_URL` — `sqlite:////data/tracker.sqlite`
+6. Click **Deploy**. The app will be live at the Railway-generated URL (you
+   can add a custom domain under *Settings → Networking*).
+
+The app reads `DATABASE_URL` and `SECRET_KEY` from the environment, so the
+same config works on Fly, Heroku-style platforms, or plain `docker run`.
+
 ## Running tests
 
 ```bash
