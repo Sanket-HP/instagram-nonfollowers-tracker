@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Accounts · IG Non-Followers Tracker{% endblock %}
+{% block content %}
+<section class="hero">
+  <h1>Track who doesn't follow you back</h1>
+  <p>
+    Add an Instagram account, import its followers and following lists from
+    Instagram's official <em>Download Your Information</em> export (or paste
+    usernames manually), and see who isn't following you back.
+  </p>
+</section>
+
+<section class="card">
+  <h2>Add an account</h2>
+  <form method="post" action="{{ url_for('main.create_account') }}" class="inline-form">
+    <label for="username">Instagram username</label>
+    <input id="username" name="username" placeholder="yourhandle" required
+           pattern="[A-Za-z0-9._@]{1,31}" />
+    <button type="submit">Add account</button>
+  </form>
+</section>
+
+<section class="card">
+  <h2>Your accounts</h2>
+  {% if accounts %}
+    <ul class="account-list">
+      {% for account in accounts %}
+        <li>
+          <a href="{{ url_for('main.account_detail', account_id=account.id) }}">
+            @{{ account.username }}
+          </a>
+          <span class="muted">
+            {{ account.snapshots|length }} snapshot{{ '' if account.snapshots|length == 1 else 's' }}
+          </span>
+          <form method="post"
+                action="{{ url_for('main.delete_account', account_id=account.id) }}"
+                onsubmit="return confirm('Delete @{{ account.username }} and all snapshots?');"
+                class="inline-delete">
+            <button type="submit" class="danger">Delete</button>
+          </form>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="muted">No accounts yet. Add one above to get started.</p>
+  {% endif %}
+</section>
+{% endblock %}

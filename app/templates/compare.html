@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Compare snapshots · @{{ account.username }}{% endblock %}
+{% block content %}
+<nav class="crumbs">
+  <a href="{{ url_for('main.index') }}">Accounts</a> /
+  <a href="{{ url_for('main.account_detail', account_id=account.id) }}">
+    @{{ account.username }}
+  </a> /
+  <strong>Compare</strong>
+</nav>
+
+<section class="card">
+  <h1>Compare snapshots</h1>
+  <form method="get" action="{{ url_for('main.compare', account_id=account.id) }}"
+        class="inline-form">
+    <label for="older">Older</label>
+    <select id="older" name="older">
+      {% for snap in snapshots %}
+        <option value="{{ snap.id }}" {% if snap.id == older.id %}selected{% endif %}>
+          #{{ snap.id }} — {{ snap.taken_at.strftime('%Y-%m-%d %H:%M') }}
+        </option>
+      {% endfor %}
+    </select>
+    <label for="newer">Newer</label>
+    <select id="newer" name="newer">
+      {% for snap in snapshots %}
+        <option value="{{ snap.id }}" {% if snap.id == newer.id %}selected{% endif %}>
+          #{{ snap.id }} — {{ snap.taken_at.strftime('%Y-%m-%d %H:%M') }}
+        </option>
+      {% endfor %}
+    </select>
+    <button type="submit">Compare</button>
+  </form>
+</section>
+
+{% macro list_card(title, usernames) %}
+  <section class="card">
+    <h2>{{ title }} <span class="muted">({{ usernames|length }})</span></h2>
+    {% if usernames %}
+      <ul class="username-list">
+        {% for username in usernames %}
+          <li>
+            <a target="_blank" rel="noopener"
+               href="https://www.instagram.com/{{ username }}/">
+              @{{ username }}
+            </a>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="muted">None.</p>
+    {% endif %}
+  </section>
+{% endmacro %}
+
+{{ list_card("New followers", result.new_followers) }}
+{{ list_card("Lost followers (unfollowed you)", result.lost_followers) }}
+{{ list_card("Newly followed by you", result.newly_followed) }}
+{{ list_card("Newly unfollowed by you", result.newly_unfollowed) }}
+{% endblock %}

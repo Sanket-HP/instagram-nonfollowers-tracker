@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% block title %}Snapshot #{{ snapshot.id }} · @{{ snapshot.account.username }}{% endblock %}
+{% block content %}
+<nav class="crumbs">
+  <a href="{{ url_for('main.index') }}">Accounts</a> /
+  <a href="{{ url_for('main.account_detail', account_id=snapshot.account.id) }}">
+    @{{ snapshot.account.username }}
+  </a> /
+  <strong>Snapshot #{{ snapshot.id }}</strong>
+</nav>
+
+<section class="card">
+  <h1>Snapshot #{{ snapshot.id }}</h1>
+  <p class="muted">
+    Taken {{ snapshot.taken_at.strftime('%Y-%m-%d %H:%M UTC') }}
+    {% if snapshot.note %} · {{ snapshot.note }}{% endif %}
+  </p>
+  <ul class="stats">
+    <li><strong>{{ snapshot.follower_count }}</strong> followers</li>
+    <li><strong>{{ snapshot.following_count }}</strong> following</li>
+    <li><strong>{{ diff.mutuals|length }}</strong> mutuals</li>
+    <li><strong>{{ diff.not_following_back|length }}</strong> not following back</li>
+  </ul>
+</section>
+
+<section class="card">
+  <h2>Import data</h2>
+  <p class="muted">
+    Upload the JSON files from Instagram's <em>Download Your Information</em>
+    export (<code>followers_1.json</code> and <code>following.json</code>), or
+    paste usernames one per line. Importing replaces the existing data for
+    that list on this snapshot.
+  </p>
+  <form method="post"
+        action="{{ url_for('main.import_to_snapshot', snapshot_id=snapshot.id) }}"
+        enctype="multipart/form-data" class="import-form">
+    <div class="import-col">
+      <h3>Followers</h3>
+      <label>
+        JSON file
+        <input type="file" name="follower_file" accept=".json,.txt,.csv" />
+      </label>
+      <label>
+        or paste usernames
+        <textarea name="follower_text" rows="6" placeholder="one username per line"></textarea>
+      </label>
+    </div>
+    <div class="import-col">
+      <h3>Following</h3>
+      <label>
+        JSON file
+        <input type="file" name="following_file" accept=".json,.txt,.csv" />
+      </label>
+      <label>
+        or paste usernames
+        <textarea name="following_text" rows="6" placeholder="one username per line"></textarea>
+      </label>
+    </div>
+    <div class="import-actions">
+      <button type="submit">Import</button>
+    </div>
+  </form>
+</section>
+
+{% macro entry_table(title, entries, export_slug) %}
+  <section class="card">
+    <div class="card-head">
+      <h2>{{ title }} <span class="muted">({{ entries|length }})</span></h2>
+      {% if entries %}
+        <a class="button"
+           href="{{ url_for('main.export_csv', snapshot_id=snapshot.id, which=export_slug) }}">
+          Export CSV
+        </a>
+      {% endif %}
+    </div>
+    {% if entries %}
+      <table class="data">
+        <thead>
+          <tr>
+            <th>Username</th>
+            <th>Full name</th>
+            <th>Profile</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for entry in entries %}
+            <tr>
+              <td>@{{ entry.username }}</td>
+              <td>{{ entry.full_name or '' }}</td>
+              <td>
+                <a target="_blank" rel="noopener"
+                   href="{{ entry.profile_url or 'https://www.instagram.com/' ~ entry.username ~ '/' }}">
+                  open ↗
+                </a>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p class="muted">Nothing here yet.</p>
+    {% endif %}
+  </section>
+{% endmacro %}
+
+{{ entry_table("Not following you back", diff.not_following_back, "not-following-back") }}
+{{ entry_table("You don't follow back", diff.you_dont_follow_back, "you-dont-follow-back") }}
+{{ entry_table("Mutuals", diff.mutuals, "mutuals") }}
+{% endblock %}

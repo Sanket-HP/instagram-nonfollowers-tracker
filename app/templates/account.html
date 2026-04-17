@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}@{{ account.username }} · IG Non-Followers Tracker{% endblock %}
+{% block content %}
+<nav class="crumbs">
+  <a href="{{ url_for('main.index') }}">Accounts</a> /
+  <strong>@{{ account.username }}</strong>
+</nav>
+
+<section class="card">
+  <h1>@{{ account.username }}</h1>
+  <p class="muted">Added {{ account.created_at.strftime('%Y-%m-%d %H:%M UTC') }}</p>
+
+  <form method="post"
+        action="{{ url_for('main.create_snapshot', account_id=account.id) }}"
+        class="inline-form">
+    <label for="note">New snapshot</label>
+    <input id="note" name="note" maxlength="255" placeholder="Optional note (e.g. 'after follow cleanup')" />
+    <button type="submit">Create snapshot</button>
+  </form>
+</section>
+
+<section class="card">
+  <h2>Snapshots</h2>
+  {% if account.snapshots %}
+    <table class="data">
+      <thead>
+        <tr>
+          <th>Taken</th>
+          <th>Note</th>
+          <th>Followers</th>
+          <th>Following</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for snapshot in account.snapshots %}
+          <tr>
+            <td>
+              <a href="{{ url_for('main.snapshot_detail', snapshot_id=snapshot.id) }}">
+                {{ snapshot.taken_at.strftime('%Y-%m-%d %H:%M UTC') }}
+              </a>
+            </td>
+            <td>{{ snapshot.note or '—' }}</td>
+            <td>{{ snapshot.follower_count }}</td>
+            <td>{{ snapshot.following_count }}</td>
+            <td class="actions">
+              <a href="{{ url_for('main.snapshot_detail', snapshot_id=snapshot.id) }}">Open</a>
+              <form method="post"
+                    action="{{ url_for('main.delete_snapshot', snapshot_id=snapshot.id) }}"
+                    onsubmit="return confirm('Delete this snapshot?');"
+                    class="inline-delete">
+                <button type="submit" class="danger">Delete</button>
+              </form>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    {% if account.snapshots|length >= 2 %}
+      <p>
+        <a class="button" href="{{ url_for('main.compare', account_id=account.id) }}">
+          Compare snapshots →
+        </a>
+      </p>
+    {% endif %}
+  {% else %}
+    <p class="muted">No snapshots yet. Create one above, then import your data.</p>
+  {% endif %}
+</section>
+{% endblock %}
